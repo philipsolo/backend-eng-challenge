@@ -1,0 +1,60 @@
+### Create a task with 'add' handler
+POST http://127.0.0.1:8000/api/run/add
+Content-Type: application/json
+
+{
+  "parameters": {
+    "a": 5,
+    "b": 3
+  }
+}
+
+> {% client.global.set("task_id", response.body.task_id); %}
+
+### Create a long-running task
+POST http://127.0.0.1:8000/api/run/long
+Content-Type: application/json
+
+{
+  "parameters": {
+    "duration": 30,
+    "steps": 20
+  }
+}
+
+> {% client.global.set("long_task_id", response.body.task_id); %}
+
+### Check task status
+GET http://127.0.0.1:8000/api/task/{{long_task_id}}/status
+Accept: application/json
+
+### Pause a long-running task
+POST http://127.0.0.1:8000/api/task/{{long_task_id}}/pause
+Content-Type: application/json
+
+### Resume a paused task
+POST http://127.0.0.1:8000/api/task/{{long_task_id}}/resume
+Content-Type: application/json
+
+### Get task result
+GET http://127.0.0.1:8000/api/task/{{long_task_id}}/result
+Accept: application/json
+
+### Cancel a task
+DELETE http://127.0.0.1:8000/api/task/{{task_id}}
+Accept: application/json
+
+
+### Test with invalid task type (should return 404)
+POST http://127.0.0.1:8000/api/run/invalid_task
+Content-Type: application/json
+
+{
+  "parameters": {
+    "test": true
+  }
+}
+
+### Test with invalid task ID (should return 404)
+GET http://127.0.0.1:8000/api/task/00000000-0000-0000-0000-000000000000/status
+Accept: application/json

@@ -1,0 +1,7 @@
+pytest~=8.3.5
+pytest-asyncio~=0.26.0
+pytest-cov
+httpx
+fastapi~=0.115.12
+uvicorn~=0.34.2
+pydantic~=2.11.4
