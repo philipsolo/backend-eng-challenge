@@ -91,8 +91,20 @@ The task manager is built on Python's asyncio and provides a scalable system for
 - **Pause/Resume**: Long-running tasks support pausing and resuming execution
 - **Graceful Cancellation**: Tasks check cancellation status at appropriate points
 - **Task Metrics**: Execution time and detailed progress tracking
-- 
+
+
 ## Development
+
+### Docker Development
+Build the image:
+```bash
+   docker build -t task-manager .
+```
+
+Run the container:
+```bash
+   docker run -p 8000:8000 task-manager
+```
 
 ### Local Development
 
@@ -102,19 +114,27 @@ The task manager is built on Python's asyncio and provides a scalable system for
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    pip install -r requirements.txt
   ```
-
-
 2. **Run the application:**
 ```bash
    uvicorn app.main:app --reload
 ```
 
 ## Access the API:
+![swagger.png](docs/images/swagger.png)
 - API: http://localhost:8000/api
 - Swagger Documentation: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
 ### Running Tests
 ```bash
-pytest
+   pytest
 ```
+
+## Additional Pre-made API spec's
+### Postman:
+Import [backend-eng-challenge.postman_collection.json](postman-collection/backend-eng-challenge.postman_collection.json) for pre-configured requests
+
+### JetBrains HTTP Client:
+Open [test_api.http](test_api.http) and send requests directly in the IDE
+
+(Note [Swagger](http://localhost:8000/docs) also allows for live testing)
