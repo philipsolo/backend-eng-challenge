@@ -108,6 +108,13 @@ async def execute_task(task: Task) -> Any:
 
 
 class TaskManager:
+    """
+    Task Manager - Core functionality for managing asynchronous tasks.
+
+    This module provides the TaskManager class which controls task execution,
+    concurrency, and lifecycle management.
+    """
+
     def __init__(self, max_concurrent=3):
         """Initialize a new TaskManager instance.
 
