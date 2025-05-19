@@ -141,4 +141,3 @@ Open [test_api.http](test_api.http) and send requests directly in the IDE
 
 ## Future Enhancements
 - Implement repository class alongside custom backends (Redis, PostgreSQL, etc.)
-- Add task metrics and monitoring dashboard
