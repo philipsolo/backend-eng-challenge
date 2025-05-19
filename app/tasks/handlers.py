@@ -17,7 +17,7 @@ TaskProgressCallback = Callable[[int, int, str], None]
 async def add_task(params: Dict[str, Any],
                    progress_callback: TaskProgressCallback,
                    is_cancelled: Callable[[], bool],
-                   is_paused: Callable[[], bool]) -> Any:
+                   _is_paused: Callable[[], bool]) -> Any:
     """Add two numbers together"""
     a = params["a"]
     b = params["b"]
@@ -28,7 +28,7 @@ async def add_task(params: Dict[str, Any],
 
     # Check if cancelled
     if is_cancelled():
-        task_logger.info(f"Addition task cancelled")
+        task_logger.info("Addition task cancelled")
         return None
 
     # Report progress
@@ -37,7 +37,7 @@ async def add_task(params: Dict[str, Any],
 
     # Check if cancelled again
     if is_cancelled():
-        task_logger.info(f"Addition task cancelled")
+        task_logger.info("Addition task cancelled")
         return None
 
     # Report completion
@@ -55,7 +55,7 @@ async def add_task(params: Dict[str, Any],
 async def fibonacci_task(params: Dict[str, Any],
                          progress_callback: TaskProgressCallback,
                          is_cancelled: Callable[[], bool],
-                         is_paused: Callable[[], bool]) -> Any:
+                         _is_paused: Callable[[], bool]) -> Any:
     """Calculate nth Fibonacci number"""
     n = params["n"]
 
@@ -70,7 +70,7 @@ async def fibonacci_task(params: Dict[str, Any],
     a, b = 0, 1
     for i in range(2, n + 1):
         # Support for pausing
-        while is_paused() and not is_cancelled():
+        while _is_paused() and not is_cancelled():
             await asyncio.sleep(0.1)
 
         if is_cancelled():
@@ -93,7 +93,7 @@ async def fibonacci_task(params: Dict[str, Any],
 async def long_task(params: Dict[str, Any],
                     progress_callback: TaskProgressCallback,
                     is_cancelled: Callable[[], bool],
-                    is_paused: Callable[[], bool]) -> Any:
+                    _is_paused: Callable[[], bool]) -> Any:
     """Long-running task with progress reporting"""
     duration = params.get("duration", 30)
     steps = params.get("steps", 20)
@@ -105,7 +105,7 @@ async def long_task(params: Dict[str, Any],
 
     for step in range(steps):
         # Support for pausing
-        while is_paused() and not is_cancelled():
+        while _is_paused() and not is_cancelled():
             await asyncio.sleep(0.1)
 
         if is_cancelled():

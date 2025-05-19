@@ -22,7 +22,7 @@ class LongParams(BaseModel):
 
 @pytest.fixture
 def mock_add_task():
-    async def mock_handler(params, progress_callback, is_cancelled, is_paused):
+    async def mock_handler(params, progress_callback, is_cancelled, _is_paused):
         progress_callback(0, 2, "Starting")
         await asyncio.sleep(0.1)
         progress_callback(2, 2, "Completed")
@@ -42,10 +42,10 @@ def mock_add_task():
 
 @pytest.fixture
 def mock_long_task():
-    async def mock_handler(params, progress_callback, is_cancelled, is_paused):
+    async def mock_handler(params, progress_callback, is_cancelled, _is_paused):
         progress_callback(0, 5, "Starting")
         for i in range(5):
-            while is_paused() and not is_cancelled():
+            while _is_paused() and not is_cancelled():
                 await asyncio.sleep(0.05)
             if is_cancelled():
                 return {"status": "cancelled", "step": i}

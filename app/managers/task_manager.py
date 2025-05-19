@@ -90,7 +90,7 @@ async def execute_task(task: Task) -> Any:
             params=task.parameters,
             progress_callback=progress_callback,
             is_cancelled=lambda: task.cancel_requested,
-            is_paused=lambda: not task.pause_event.is_set()
+            _is_paused=lambda: not task.pause_event.is_set()
         )
 
         if not task.cancel_requested:
