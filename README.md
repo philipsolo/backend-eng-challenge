@@ -138,3 +138,7 @@ Import [backend-eng-challenge.postman_collection.json](postman-collection/backen
 Open [test_api.http](test_api.http) and send requests directly in the IDE
 
 (Note [Swagger](http://localhost:8000/docs) also allows for live testing)
+
+## Future Enhancements
+- Implement repository class alongside custom backends (Redis, PostgreSQL, etc.)
+- Add task metrics and monitoring dashboard
