@@ -3,23 +3,17 @@ import time
 from typing import Dict, Any, Callable
 
 from app.core.logger import task_logger
-
+from app.tasks import AddTaskParams, FibonacciTaskParams, LongTaskParams, register_task
 
 TaskProgressCallback = Callable[[int, int, str], None]
 
-TASK_HANDLERS = {}
 
-
-def register_task(name: str):
-
-    def decorator(func):
-        TASK_HANDLERS[name] = func
-        return func
-
-    return decorator
-
-
-@register_task("add")
+@register_task(
+    name="add",
+    model=AddTaskParams,
+    example={"a": 5, "b": 3},
+    description="Add two numbers together"
+)
 async def add_task(params: Dict[str, Any],
                    progress_callback: TaskProgressCallback,
                    is_cancelled: Callable[[], bool],
@@ -52,7 +46,12 @@ async def add_task(params: Dict[str, Any],
     return a + b
 
 
-@register_task("fib")
+@register_task(
+    name="fib",
+    model=FibonacciTaskParams,
+    example={"n": 10},
+    description="Calculate nth Fibonacci number"
+)
 async def fibonacci_task(params: Dict[str, Any],
                          progress_callback: TaskProgressCallback,
                          is_cancelled: Callable[[], bool],
@@ -85,7 +84,12 @@ async def fibonacci_task(params: Dict[str, Any],
     return b
 
 
-@register_task("long")
+@register_task(
+    name="long",
+    model=LongTaskParams,
+    example={"duration": 30, "steps": 20},
+    description="Long-running task with progress reporting"
+)
 async def long_task(params: Dict[str, Any],
                     progress_callback: TaskProgressCallback,
                     is_cancelled: Callable[[], bool],

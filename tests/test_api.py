@@ -3,11 +3,21 @@ import time
 from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
-
+from pydantic import BaseModel
 from app.main import app
-from app.tasks.handlers import TASK_HANDLERS
+from app.tasks.registry import TASK_REGISTRY, TaskSpec
 
 client = TestClient(app)
+
+
+class AddParams(BaseModel):
+    a: int
+    b: int
+
+
+class LongParams(BaseModel):
+    duration: float = 1.0
+    steps: int = 5
 
 
 @pytest.fixture
@@ -18,7 +28,15 @@ def mock_add_task():
         progress_callback(2, 2, "Completed")
         return params["a"] + params["b"]
 
-    with patch.dict(TASK_HANDLERS, {"add": mock_handler}):
+    mock_spec = TaskSpec(
+        name="add",
+        model=AddParams,
+        func=mock_handler,
+        example={"a": 1, "b": 2},
+        description="Add two numbers"
+    )
+
+    with patch.dict(TASK_REGISTRY, {"add": mock_spec}):
         yield
 
 
@@ -35,9 +53,16 @@ def mock_long_task():
             progress_callback(i + 1, 5, f"Step {i + 1}")
         return {"status": "completed", "steps": 5}
 
-    with patch.dict(TASK_HANDLERS, {"long": mock_handler}):
-        yield
+    mock_spec = TaskSpec(
+        name="long",
+        model=LongParams,
+        func=mock_handler,
+        example={"duration": 1.0, "steps": 5},
+        description="Long-running task"
+    )
 
+    with patch.dict(TASK_REGISTRY, {"long": mock_spec}):
+        yield
 
 def wait_for_status(task_id, target_status, max_attempts=20):
     """Wait for a task to reach a specific status"""

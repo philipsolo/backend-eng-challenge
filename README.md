@@ -21,11 +21,11 @@ This system is built with:
 
 ## Available Tasks
 
-| Task Type | Description | Parameters |
-|-----------|-------------|------------|
-| `add` | Add two numbers | `a`: first number, `b`: second number |
-| `fib` | Calculate Fibonacci number | `n`: sequence index |
-| `long` | Long-running task | `duration`: seconds, `steps`: number of steps |
+| Task Type | Description                | Parameters                                    |
+|-----------|----------------------------|-----------------------------------------------|
+| `add`     | Add two numbers            | `a`: first number, `b`: second number         |
+| `fib`     | Calculate Fibonacci number | `n`: sequence index                           |
+| `long`    | Long-running task          | `duration`: seconds, `steps`: number of steps |
 
 ## API Endpoints
 

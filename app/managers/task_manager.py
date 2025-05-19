@@ -1,11 +1,11 @@
 import asyncio
 import time
 import uuid
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from app.core.logger import task_logger, log_task_event
 from app.models import Task, TaskStatus
-from app.tasks.handlers import TASK_HANDLERS
+from app.tasks import TASK_REGISTRY
 
 
 def _verify_task_status(task: Task, expected_status: TaskStatus, operation: str) -> None:
@@ -23,32 +23,8 @@ def _verify_task_status(task: Task, expected_status: TaskStatus, operation: str)
         task_logger.warning(f"Cannot {operation} task {task.task_id}: Invalid status {task.status}")
         raise ValueError(f"Cannot {operation} task with status {task.status}")
 
-async def _execute_task_handler(task):
-    """Execute the appropriate handler for a task.
 
-    Sets up the progress callback and executes the handler for the task type.
-
-    Args:
-        task: The Task object to execute
-
-    Returns:
-        The result from the task handler
-    """
-
-    handler = TASK_HANDLERS[task.task_type]
-
-    def progress_callback(current, total, message):
-        task.progress = {"current": current, "total": total, "message": message}
-
-    return await handler(
-        params=task.parameters,
-        progress_callback=progress_callback,
-        is_cancelled=lambda: task.cancel_requested,
-        is_paused=lambda: not task.pause_event.is_set()
-    )
-
-
-def _process_task_result(task, result):
+def _process_task_result(task: Task, result: Any) -> None:
     """Process the result after task execution.
 
     Updates task state based on execution result and whether cancellation was requested.
@@ -68,7 +44,7 @@ def _process_task_result(task, result):
         task_logger.info(f"Task {task.task_id} completed successfully")
 
 
-def _handle_task_failure(task, exception):
+def _handle_task_failure(task: Task, exception: Exception) -> None:
     """Handle task failure by updating task state and logging the error.
 
     Args:
@@ -80,6 +56,55 @@ def _handle_task_failure(task, exception):
     task.result = str(exception)
     task.completed_at = time.time()
     task_logger.error(f"Task {task.task_id} failed: {str(exception)}")
+
+
+async def execute_task(task: Task) -> Any:
+    """Execute a task and handle its result or failure.
+
+    Processes a task by retrieving its TaskSpec and executing the associated function
+    with proper progress tracking and cancellation/pause support.
+
+    Args:
+        task: The Task object to execute
+
+    Returns:
+        The result from the task's execution
+
+    Raises:
+        Exception: Any exception that occurs during task execution
+    """
+    try:
+        task_logger.info(f"Starting task {task.task_id} of type {task.task_type}")
+
+        # Access properties via dot notation instead of dictionary-style access
+        task_spec = TASK_REGISTRY[task.task_type]
+
+        # Replace string literals with enum values
+        task.status = TaskStatus.RUNNING  # Instead of "running"
+        task.pause_event.set()
+
+        def progress_callback(current, total, message):
+            task.progress = {"current": current, "total": total, "message": message}
+
+        result = await task_spec.func(
+            params=task.parameters,
+            progress_callback=progress_callback,
+            is_cancelled=lambda: task.cancel_requested,
+            is_paused=lambda: not task.pause_event.is_set()
+        )
+
+        if not task.cancel_requested:
+            task.status = TaskStatus.COMPLETED  # Instead of "completed"
+            task.result = result
+            task_logger.info(f"Task {task.task_id} completed successfully")
+
+        return result
+
+    except Exception as e:
+        task.status = TaskStatus.FAILED  # Instead of "failed"
+        task.error = str(e)
+        task_logger.error(f"Task {task.task_id} failed: {str(e)}", exc_info=True)
+        raise
 
 
 class TaskManager:
@@ -96,7 +121,7 @@ class TaskManager:
         self.lock = asyncio.Lock()
         task_logger.info(f"TaskManager initialized with max_concurrent={max_concurrent}")
 
-    async def _run_task(self, task):
+    async def _run_task(self, task: Task) -> None:
         """Main orchestrator for running a task.
 
         Handles the entire lifecycle of a task execution including:
@@ -115,7 +140,7 @@ class TaskManager:
             task.status = TaskStatus.RUNNING
             task.started_at = time.time()
 
-            result = await _execute_task_handler(task)
+            result = await execute_task(task)
             _process_task_result(task, result)
 
         except Exception as e:
@@ -124,7 +149,7 @@ class TaskManager:
         finally:
             await self._cleanup_task()
 
-    async def _cleanup_task(self):
+    async def _cleanup_task(self) -> None:
         """Clean up after task execution and manage queue.
 
         Decrements the running count and starts any queued tasks
@@ -134,7 +159,7 @@ class TaskManager:
             self.running_count -= 1
             await self._start_queued_tasks()
 
-    async def submit_task(self, task_type, parameters):
+    async def submit_task(self, task_type: str, parameters: Dict[str, Any]) -> str:
         """Submit a new task for execution.
 
         Creates a new task and either starts it immediately if there's
@@ -155,16 +180,15 @@ class TaskManager:
         async with self.lock:
             if self.running_count < self.max_concurrent:
                 self.running_count += 1
-                # Start task in background
+
                 asyncio.create_task(self._run_task(task))
             else:
-                # Queue task for later execution
                 task_logger.info(f"Queuing task {task_id} (max concurrent tasks reached)")
                 self.queue.append(task_id)
 
         return task_id
 
-    async def _start_queued_tasks(self):
+    async def _start_queued_tasks(self) -> None:
         """Start queued tasks if there's capacity.
 
         Checks the queue for pending tasks and starts them if the
@@ -198,7 +222,7 @@ class TaskManager:
             raise KeyError(f"Task {task_id} not found")
         return self.tasks[task_id]
 
-    async def pause_task(self, task_id: str):
+    async def pause_task(self, task_id: str) -> None:
         """Pause a running task.
 
         Args:
@@ -216,7 +240,7 @@ class TaskManager:
         task.status = TaskStatus.PAUSED
         log_task_event(task_logger, task_id, "PAUSED", {"previous_status": "RUNNING"})
 
-    async def resume_task(self, task_id: str):
+    async def resume_task(self, task_id: str) -> None:
         """Resume a paused task.
 
         Args:
@@ -234,7 +258,7 @@ class TaskManager:
         task.status = TaskStatus.RUNNING
         log_task_event(task_logger, task_id, "RESUMED", {"previous_status": "PAUSED"})
 
-    async def cancel_task(self, task_id: str):
+    async def cancel_task(self, task_id: str) -> None:
         """Cancel a task that is queued, running, or paused.
 
         For queued tasks, removes them from the queue.

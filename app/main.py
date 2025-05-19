@@ -3,8 +3,8 @@ import uuid
 
 from fastapi import FastAPI
 from fastapi import Request
-from .api.endpoints import router
-from .core import api_logger
+from app.api import router
+from app.core import api_logger
 
 app = FastAPI(
     title="Task Processing API",

@@ -41,7 +41,7 @@ GET http://127.0.0.1:8000/api/task/{{long_task_id}}/result
 Accept: application/json
 
 ### Cancel a task
-DELETE http://127.0.0.1:8000/api/task/{{task_id}}
+DELETE http://127.0.0.1:8000/api/task/{{long_task_id}}
 Accept: application/json
 
 

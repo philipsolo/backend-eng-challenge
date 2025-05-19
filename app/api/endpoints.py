@@ -7,8 +7,7 @@ from app.models import TaskRequest
 from app.tasks import (
     get_available_task_types,
     get_task_spec,
-    validate_task_parameters,
-    TASK_SPECS
+    validate_task_parameters, TASK_REGISTRY,
 )
 
 router = APIRouter(tags=["Tasks"])
@@ -18,18 +17,17 @@ task_manager = TaskManager(max_concurrent=3)
 @router.get("/tasks", response_model=Dict[str, Any])
 async def get_available_tasks():
     task_details = {}
-    for task_type, spec in TASK_SPECS.items():
+    for task_type, spec in TASK_REGISTRY.items():
         task_details[task_type] = {
-            "description": spec["description"],
-            "parameters": spec["model"].model_json_schema(),
-            "example": spec["example"]
+            "description": spec.description,
+            "parameters": spec.model.model_json_schema(),
+            "example": spec.example
         }
 
     return {
         "available_tasks": get_available_task_types(),
         "task_details": task_details
     }
-
 @router.get("/tasks/{task_type}", response_model=Dict[str, Any])
 async def get_task_info(
     task_type: str = Path(..., description="Task type to get information about")
@@ -40,9 +38,9 @@ async def get_task_info(
         raise HTTPException(status_code=404, detail=f"Task type '{task_type}' not found")
 
     return {
-        "description": spec["description"],
-        "parameters": spec["model"].model_json_schema(),
-        "example": spec["example"]
+        "description": spec.description,
+        "parameters": spec.model.model_json_schema(),
+        "example": spec.example
     }
 
 @router.post("/run/{task_type}", response_model=Dict[str, Any])
