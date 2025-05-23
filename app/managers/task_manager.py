@@ -75,12 +75,9 @@ async def execute_task(task: Task) -> Any:
     """
     try:
         task_logger.info(f"Starting task {task.task_id} of type {task.task_type}")
-
-        # Access properties via dot notation instead of dictionary-style access
         task_spec = TASK_REGISTRY[task.task_type]
 
-        # Replace string literals with enum values
-        task.status = TaskStatus.RUNNING  # Instead of "running"
+        task.status = TaskStatus.RUNNING  
         task.pause_event.set()
 
         def progress_callback(current, total, message):
@@ -94,14 +91,14 @@ async def execute_task(task: Task) -> Any:
         )
 
         if not task.cancel_requested:
-            task.status = TaskStatus.COMPLETED  # Instead of "completed"
+            task.status = TaskStatus.COMPLETED  
             task.result = result
             task_logger.info(f"Task {task.task_id} completed successfully")
 
         return result
 
     except Exception as e:
-        task.status = TaskStatus.FAILED  # Instead of "failed"
+        task.status = TaskStatus.FAILED  
         task.error = str(e)
         task_logger.error(f"Task {task.task_id} failed: {str(e)}", exc_info=True)
         raise
